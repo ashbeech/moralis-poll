@@ -26,7 +26,7 @@ function Polls({ more }) {
   //const Web3Api = useMoralisWeb3Api();
   //
   const [access, setReg] = useState(false);
-  const { refetchUserData, user, isAuthenticated, Moralis } = useMoralis();
+  const { refetchUserData, account, isAuthenticated, Moralis } = useMoralis();
   const {
     getBalance,
     data: balance,
@@ -41,7 +41,7 @@ function Polls({ more }) {
   const [pollAnswers, setPollAnswers] = useState([...answers]);
 
   const checkReg = async (_access) => {
-    console.log("Voter: ", JSON.stringify(user));
+    console.log("Account: ", JSON.stringify(account));
 
     if (!isAuthenticated) {
       return false;
@@ -49,13 +49,14 @@ function Polls({ more }) {
       // reset options
       option_voted = "";
       poll_id = "AvZstBTkxkj7nI517qNWXPym"; //<-- temp objectId to update same row, instead of saving new row
-      voter = user.attributes.accounts[0];
+      voter = account; //user.attributes.accounts[0];
       poll_title = pollQuestion;
       poll_options = [];
 
       console.log("Token Balances: ", JSON.stringify(balance.balance));
+
       // give access to vote if meets conditions
-      _access = balance.balance && balance.balance > 0 && voter ? true : false;
+      _access = balance.balance && voter ? true : false;
       setReg(_access);
       return _access;
     }
@@ -63,7 +64,7 @@ function Polls({ more }) {
 
   useEffect(() => {
     checkReg();
-  }, [user, balance]);
+  }, [account, balance]);
 
   const handleVote = async (voteAnswer) => {
     option_voted = voteAnswer;
