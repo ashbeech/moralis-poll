@@ -4,7 +4,6 @@ import {
   useNativeBalance,
   useNewMoralisObject,
 } from "react-moralis";
-//import { useMoralisDapp } from "providers/MoralisDappProvider/MoralisDappProvider";
 import Poll from "react-polls";
 
 // Declaring poll question and answers
@@ -14,7 +13,6 @@ const answers = [
   { option: "No", votes: 2 },
   { option: "don't know", votes: 1 },
 ];
-let balances = null;
 let option_voted = "";
 let poll_id = null;
 let voter = {};
@@ -23,10 +21,9 @@ let poll_options = [];
 
 function Polls({ more }) {
   //
-  //const Web3Api = useMoralisWeb3Api();
-  //
   const [access, setReg] = useState(false);
   const { refetchUserData, account, isAuthenticated, Moralis } = useMoralis();
+  //const { switchNetwork, chainId, chain, account } = useChain();
   const {
     getBalance,
     data: balance,
@@ -34,11 +31,27 @@ function Polls({ more }) {
     isLoading,
   } = useNativeBalance({ chain: "mumbai" });
   const { isSaving, error, save, object } = useNewMoralisObject("Polls");
-  //const [access, isRegistered] = useState(true);
-  //const { walletAddress, chainId } = useMoralisDapp();
 
   // Setting answers to state to reload the component with each vote
   const [pollAnswers, setPollAnswers] = useState([...answers]);
+
+  // TODO: Need to display/build Polls data from Moralis instance.
+  // 'AvZstBTkxkj7nI517qNWXPym' is static, exisiting example of objectId in db.
+  // 👇
+  /*   
+    const PollsData = Moralis.Object.extend("Polls");
+    const query = new Moralis.Query(PollsData);
+
+    query.get("AvZstBTkxkj7nI517qNWXPym").then(
+    (object) => {
+      // The object was retrieved successfully.
+      console.log("Account: ", JSON.stringify("Poll Data:", object));
+    },
+    (error) => {
+      // The object was not retrieved successfully.
+      // error is a Moralis.Error with an error code and message.
+    }
+  ); */
 
   const checkReg = async (_access) => {
     console.log("Account: ", JSON.stringify(account));
@@ -83,28 +96,17 @@ function Polls({ more }) {
 
     // Poll Class
     // columns: poll_id: uint, poll_options: [{option: "Yes", votes: 7}, {option: "No", votes: 2}], poll_voters: {user_id}
-    // OR
-    // columns: poll_id: uint, poll_options: {option: "Yes", option: "No", poll_votes: {0:7, 1:2}, poll_voters: {user_id}
 
-    // test db integration
-    //create poll
+    // test db integration with static example
+    // create poll
     //
     let poll_data = {
       id: poll_id,
       options: poll_options,
       voted: voter,
     };
-    /*     const saveObject = async () => {
-      try {
-        await save(poll_data);
-      } catch (error) {
-        console.log("You got an error");
-      }
-    };
-    await saveObject(); */
 
     const pollObject = new Moralis.Object("Polls");
-
     pollObject.set("objectId", poll_data.id);
     pollObject.set("options", poll_data.options);
     pollObject.addUnique("voted", poll_data.voted);
