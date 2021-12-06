@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   useMoralis,
   useNativeBalance,
   useNewMoralisObject,
 } from "react-moralis";
 import Poll from "react-polls";
+
+let saved_account = "";
+let new_user = true;
 
 // Declaring poll question and answers
 const pollQuestion = "Youtube is the best place to learn ?";
@@ -14,7 +17,7 @@ const answers = [
   { option: "don't know", votes: 1 },
 ];
 let option_voted = "";
-let poll_id = null;
+let poll_id = 1;
 let voter = {};
 let poll_title = "";
 let poll_options = [];
@@ -22,7 +25,8 @@ let poll_options = [];
 function Polls({ more }) {
   //
   const [access, setReg] = useState(false);
-  const { refetchUserData, account, isAuthenticated, Moralis } = useMoralis();
+  const { isInitialized, refetchUserData, account, isAuthenticated, Moralis } =
+    useMoralis();
   //const { switchNetwork, chainId, chain, account } = useChain();
   const {
     getBalance,
@@ -35,23 +39,24 @@ function Polls({ more }) {
   // Setting answers to state to reload the component with each vote
   const [pollAnswers, setPollAnswers] = useState([...answers]);
 
+  const isInitialMount = useRef(true);
+
   // TODO: Need to display/build Polls data from Moralis instance.
   // 'AvZstBTkxkj7nI517qNWXPym' is static, exisiting example of objectId in db.
   // 👇
-  /*   
-    const PollsData = Moralis.Object.extend("Polls");
-    const query = new Moralis.Query(PollsData);
 
-    query.get("AvZstBTkxkj7nI517qNWXPym").then(
-    (object) => {
-      // The object was retrieved successfully.
-      console.log("Account: ", JSON.stringify("Poll Data:", object));
-    },
-    (error) => {
-      // The object was not retrieved successfully.
-      // error is a Moralis.Error with an error code and message.
-    }
-  ); */
+  /*   const PollsData = Moralis.Object.extend("Polls");
+  const query = new Moralis.Query(PollsData); */
+
+  const updateMonster = async () => {
+    const MonsterCreature = Moralis.Object.extend("Polls");
+    const query = new Moralis.Query(MonsterCreature);
+    //query.equalTo("objectId", "AvZstBTkxkj7nI517qNWXPym");
+    query.equalTo("pollId", 1); //<-- temp id/objectId to update same row, instead of saving new row
+    const monster = await query.first();
+
+    return monster;
+  };
 
   const checkReg = async (_access) => {
     console.log("Account: ", JSON.stringify(account));
@@ -59,25 +64,51 @@ function Polls({ more }) {
     if (!isAuthenticated) {
       return false;
     } else {
-      // reset options
-      option_voted = "";
-      poll_id = "AvZstBTkxkj7nI517qNWXPym"; //<-- temp objectId to update same row, instead of saving new row
-      voter = account; //user.attributes.accounts[0];
-      poll_title = pollQuestion;
-      poll_options = [];
+      _access = balance.balance && balance.balance > 0 ? true : false;
+      console.log("ACCESS: ", JSON.stringify(_access));
+      if (_access) {
+        //let poll = await updateMonster(poll_id);
+        // reset options
+        option_voted = "";
+        voter = account;
+        poll_title = pollQuestion;
+        poll_options = answers; //poll.attributes.options;
+        setPollAnswers(poll_options);
 
-      console.log("Token Balances: ", JSON.stringify(balance.balance));
+        //console.log("Token Balances: ", JSON.stringify(balance.balance));
+        //console.log("Poll Data: ", JSON.stringify(poll.attributes.options));
 
-      // give access to vote if meets conditions
-      _access = balance.balance && voter ? true : false;
-      setReg(_access);
+        // give access to vote if meets conditions
+        setReg(_access);
+        saved_account = account;
+      } else {
+        // no access
+      }
+
       return _access;
     }
   };
 
   useEffect(() => {
-    checkReg();
-  }, [account, balance]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+      // Your useEffect code here to be run on update
+      console.log("Account:", account);
+      console.log("Saved Account:", saved_account);
+      console.log("Token Balances: ", JSON.stringify(balance));
+
+      if (isInitialized && balance.balance > 0) {
+        if (saved_account !== account) {
+          console.log("CHECK REG");
+          checkReg();
+        }
+      } else {
+        //saved_account = account;
+        setReg(false);
+      }
+    }
+  }, [account, balance, isInitialized]);
 
   const handleVote = async (voteAnswer) => {
     option_voted = voteAnswer;
@@ -102,12 +133,14 @@ function Polls({ more }) {
     //
     let poll_data = {
       id: poll_id,
+      title: poll_title,
       options: poll_options,
       voted: voter,
     };
 
     const pollObject = new Moralis.Object("Polls");
-    pollObject.set("objectId", poll_data.id);
+    pollObject.set("id", poll_data.id);
+    pollObject.set("title", poll_data.title);
     pollObject.set("options", poll_data.options);
     pollObject.addUnique("voted", poll_data.voted);
     pollObject.save();
