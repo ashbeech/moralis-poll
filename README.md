@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # `web3-social-network-boilerplate`
 
 This Project is a fork of [Ethereum Boilerplate](https://github.com/ethereum-boilerplate/ethereum-boilerplate) and demostrates how you can build your own Web3 Ethereum Social Network. This project of course work on any EVM-compatible blockchain such as Polygon, Avalanche, Binance Smart Chain and other such chains. 
@@ -38,3 +39,6 @@ REACT_APP_MORALIS_SERVER_URL = https://xxxxxx.grandmoralis.com:2053/server
 ```sh
 yarn start
 ```
+=======
+# moralis-poll
+>>>>>>> c5ffe69f8cdf716654e52dfac7c409c1f0b2f3c3
