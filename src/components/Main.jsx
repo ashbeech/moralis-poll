@@ -23,9 +23,11 @@ const Main = () => {
           gap: "20px",
         }}
       >
+        {/* Inserted Poll 'component/Poll.js' */}
         <Polls />
+        {/* Temporarily just commented-out */}
         {/* <Categories categories={fetchedCategories}/>
-                <Feed/> */}
+          <Feed/> */}
       </div>
     </div>
   );

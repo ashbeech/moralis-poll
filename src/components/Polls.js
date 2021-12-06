@@ -7,9 +7,15 @@ import {
 import Poll from "react-polls";
 
 let saved_account = "";
-let new_user = true;
+
+// WARNING: DEMO CODE/WIP
+// TODO: Need to display/build Polls data from Moralis instance.
+// TODO: utilise further  calls such as …
+// 'const { switchNetwork, chainId, chain, account } = useChain();'
 
 // Declaring poll question and answers
+// Currenltly static, exisiting example of objectId in Moralis instance's db.
+
 const pollQuestion = "Youtube is the best place to learn ?";
 const answers = [
   { option: "Yes", votes: 7 },
@@ -23,11 +29,9 @@ let poll_title = "";
 let poll_options = [];
 
 function Polls({ more }) {
-  //
   const [access, setReg] = useState(false);
-  const { isInitialized, refetchUserData, account, isAuthenticated, Moralis } =
-    useMoralis();
-  //const { switchNetwork, chainId, chain, account } = useChain();
+  const { isInitialized, account, isAuthenticated, Moralis } = useMoralis();
+
   const {
     getBalance,
     data: balance,
@@ -38,46 +42,33 @@ function Polls({ more }) {
 
   // Setting answers to state to reload the component with each vote
   const [pollAnswers, setPollAnswers] = useState([...answers]);
-
   const isInitialMount = useRef(true);
 
-  // TODO: Need to display/build Polls data from Moralis instance.
-  // 'AvZstBTkxkj7nI517qNWXPym' is static, exisiting example of objectId in db.
-  // 👇
+  const updatePoll = async () => {
+    const PollData = Moralis.Object.extend("Polls");
+    const query = new Moralis.Query(PollData);
+    // Building Poll from Moralis instance will include: 'query.equalTo("id", 1);'
+    query.equalTo("pollId", 1); //<-- temp/static id to update same row, instead of saving new row
+    const poll = await query.first();
 
-  /*   const PollsData = Moralis.Object.extend("Polls");
-  const query = new Moralis.Query(PollsData); */
-
-  const updateMonster = async () => {
-    const MonsterCreature = Moralis.Object.extend("Polls");
-    const query = new Moralis.Query(MonsterCreature);
-    //query.equalTo("objectId", "AvZstBTkxkj7nI517qNWXPym");
-    query.equalTo("pollId", 1); //<-- temp id/objectId to update same row, instead of saving new row
-    const monster = await query.first();
-
-    return monster;
+    return poll;
   };
 
+  // check reg status -> handle
   const checkReg = async (_access) => {
-    console.log("Account: ", JSON.stringify(account));
-
     if (!isAuthenticated) {
+      // not authenticated user
       return false;
     } else {
+      // access condition
       _access = balance.balance && balance.balance > 0 ? true : false;
-      console.log("ACCESS: ", JSON.stringify(_access));
       if (_access) {
-        //let poll = await updateMonster(poll_id);
-        // reset options
+        // reset/build options
         option_voted = "";
         voter = account;
         poll_title = pollQuestion;
-        poll_options = answers; //poll.attributes.options;
+        poll_options = answers;
         setPollAnswers(poll_options);
-
-        //console.log("Token Balances: ", JSON.stringify(balance.balance));
-        //console.log("Poll Data: ", JSON.stringify(poll.attributes.options));
-
         // give access to vote if meets conditions
         setReg(_access);
         saved_account = account;
@@ -93,18 +84,14 @@ function Polls({ more }) {
     if (isInitialMount.current) {
       isInitialMount.current = false;
     } else {
-      // Your useEffect code here to be run on update
-      console.log("Account:", account);
-      console.log("Saved Account:", saved_account);
-      console.log("Token Balances: ", JSON.stringify(balance));
-
+      // run on update
       if (isInitialized && balance.balance > 0) {
         if (saved_account !== account) {
-          console.log("CHECK REG");
+          // check registration status
           checkReg();
         }
       } else {
-        //saved_account = account;
+        // reset registration status to false
         setReg(false);
       }
     }
@@ -125,7 +112,7 @@ function Polls({ more }) {
     console.log("Async", asyncVoteRes);
     poll_options = asyncVoteRes;
 
-    // Poll Class
+    // Poll Class Design
     // columns: poll_id: uint, poll_options: [{option: "Yes", votes: 7}, {option: "No", votes: 2}], poll_voters: {user_id}
 
     // test db integration with static example
@@ -146,10 +133,12 @@ function Polls({ more }) {
     pollObject.save();
   };
 
+  // Not authoriased
   if (!access) {
     return <>{"NO ACCESS"}</>;
   }
 
+  // Authoriased
   return (
     <>
       <Poll
